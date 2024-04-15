@@ -1,3 +1,4 @@
+import pytest
 from dataclasses import dataclass
 
 
@@ -19,22 +20,11 @@ def extract_msg_from_buffer(buffer):
     return None, 0
 
 
-def test_read_frame_simple_string_incomplete():
-    buff = b"+Incomple"
-    frame, frame_size = extract_msg_from_buffer(buff)
-    assert frame == None
-    assert frame_size == 0
-
-
-def test_read_frame_simple_string_complete():
-    buff = b"+OK\r\n"
-    frame, frame_size = extract_msg_from_buffer(buff)
-    assert frame == SimpleString("OK")
-    assert frame_size == 5
-
-
-def test_read_frame_simple_string_extra_data():
-    buff = b"+OK\r\n+Next"
-    frame, frame_size = extract_msg_from_buffer(buff)
-    assert frame == SimpleString("OK")
-    assert frame_size == 5
+@pytest.mark.parametrize("buffer,expected", [
+    (b"+Incomple", (None, 0)),
+    (b"+OK\r\n", (SimpleString("OK"), 5)),
+    (b"+OK\r\n+Next", (SimpleString("OK"), 5)),
+])
+def test_read_frame_simple_string(buffer, expected):
+    actual = extract_msg_from_buffer(buffer)
+    assert actual == expected
